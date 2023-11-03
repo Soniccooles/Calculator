@@ -7,9 +7,9 @@ using System.Threading.Tasks.Dataflow;
 
 namespace Programm1;
 
-public class Programm // Класс программ
+public class Programm
 {
-    public static void Main(string[] args) //Функция главная
+    public static void Main(string[] args)
     {
         while (true)
         {
@@ -40,13 +40,13 @@ public class Programm // Класс программ
             {
                 if (input[index] == '(')
                 {
-                    operandPriority++;
+                    operandPriority += 2;
                     input.Remove(index);
                 }
 
                 if (input[index] == ')')
                 {
-                    operandPriority--;
+                    operandPriority -= 2;
                     input.Remove(index);
                 }
                 else
