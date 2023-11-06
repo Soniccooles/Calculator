@@ -1,0 +1,191 @@
+using System;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.Design;
+using System.Globalization;
+using System.Linq.Expressions;
+using System.Reflection.Metadata.Ecma335;
+using System.Threading.Tasks.Dataflow;
+
+namespace Programm1;
+
+public class Programm // Класс программ
+{
+    public static void Main(string[] args) //Функция главная
+    {
+        while (true)
+        {
+            string input = Console.ReadLine().Replace(" ", "");
+            // Console.WriteLine(string.Join(' ', WriteOperands(input)));
+            // Console.WriteLine(string.Join(' ', WriteNumbers(input)));
+            // Console.WriteLine(WriteResult(input));
+            Console.WriteLine(string.Join(' ', ToReversePolishNotation(input)));
+        }
+    }
+    public static List<object> ToReversePolishNotation(string input)
+    {
+        int previousPriority = 0;
+        int priority = 0;
+        string number = "";
+        List<object> result = new List<object>();
+        Stack<object> stack = new Stack<object>();
+        int index = 0;
+        foreach (var element in input + ' ')
+        {
+            if (Char.IsDigit(element) || (element == ','))
+            {
+                number += element;  
+            }
+            else
+            {
+                result.Add(number);
+                number = "";
+            }
+            if (element == '(')
+            {
+                stack.Push(element);
+                priority++;
+            }
+            if (element == ')')
+            {
+                while (Convert.ToChar(stack.Peek()) != '(')
+                {
+                    result.Add(stack.Peek());
+                    stack.Pop();
+                }
+            }
+            if ((element == '*') || (element == '/'))
+            {
+                priority++;
+                if (previousPriority > priority)
+                {
+                    result.Add(stack.Peek());
+                    stack.Pop();
+                }
+                else
+                {
+                    stack.Push(element);
+                    previousPriority = priority;
+                    priority = 0;
+                }
+            }
+            if (element == '+' || element == '-')
+            {
+                if (previousPriority > priority)
+                {
+                    result.Add(stack.Pop());
+                }
+                else
+                {
+                    stack.Push(element);
+                    previousPriority = priority;
+                    priority = 0;
+                }
+            }
+            Console.WriteLine(string.Join(' ', result));
+            Console.WriteLine(string.Join(' ', stack));
+        }
+        return result;
+    }
+
+    public static List<(char op, int prio)> WriteOperands(string input)
+    {
+        (char op, int prio) operationAndPriority = new();
+        List<(char op, int priority)> tuple = new List<(char op, int prio)>();
+        foreach (var element in input)
+        {
+            if ((element == '.') || (element == ',') || (element == '(') || (element == ')'))
+                continue;
+            if (!Char.IsDigit(element))
+                operationAndPriority.op = element;
+        }
+
+        int operandPriority = 0;
+        if (input.Contains('(') || input.Contains('+') || input.Contains('-')
+            || input.Contains('*') || input.Contains('/'))
+        {
+            for (int index = 0; index < input.Length; index++)
+            {
+                if (input[index] == '(')
+                {
+                    operandPriority += 2;
+                    input.Remove(index);
+                }
+
+                if (input[index] == ')')
+                {
+                    operandPriority -= 2;
+                    input.Remove(index);
+                }
+                else
+                {
+                    if ((input[index] == '/') || (input[index] == '*'))
+                    {
+                        operandPriority++;
+                        operationAndPriority.prio = operandPriority;
+                        operationAndPriority.op = input[index];
+                        tuple.Add(operationAndPriority);
+                        operandPriority--;
+                    }
+                    else if ((input[index] == '+') || (input[index] == '-'))
+                    {
+                        operationAndPriority.prio = operandPriority;
+                        operationAndPriority.op = input[index];
+                        tuple.Add(operationAndPriority);
+                    }
+                }
+            }
+        }
+        return tuple;
+    }
+    public static List<float> WriteNumbers(string input)
+    {
+        List<float> numberList = new List<float>();
+        string number = "";
+
+        foreach (var element in input + " ")
+        {
+            if ((Char.IsDigit(element) && element != '(' && element != ')') || (element == ',')) number += element;
+
+            else if (number != "")
+            {
+                numberList.Add(float.Parse(number));
+                number = "";
+            }
+        }
+        return numberList;
+    }
+
+    public static float WriteResult(string input)
+    {
+        List<(char op, int prio)> operationAndPriority = WriteOperands(input);
+        List<float> numberList = WriteNumbers(input);
+        while (operationAndPriority.Count > 0)
+        {
+            int maxPriority = operationAndPriority.Max(t => t.Item2);
+            int index = operationAndPriority.FindIndex(t => t.Item2 == maxPriority);
+
+            char op = operationAndPriority[index].op;
+
+            float num1 = numberList[index];
+            float num2 = numberList[index + 1];
+            float result = Calculate(op, num1, num2);
+
+            numberList.RemoveAt(index + 1);
+            numberList.RemoveAt(index);
+            operationAndPriority.RemoveAt(index);
+            numberList.Insert(index, result);
+        }
+        return numberList[0];
+    }
+    public static float Calculate(char op, float num1, float num2)
+    {
+        switch (op)
+        {
+            case '+': return num1 + num2;
+            case '-': return num1 - num2;
+            case '*': return num1 * num2;
+            case '/': return num1 / num2;
+        }
+        throw new Exception("I don't know this operation!");
+    }
+}
